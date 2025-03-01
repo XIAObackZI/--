@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星空应用系列 - 菜单</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #000428, #004e92);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite ease-in-out;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        
+        h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
+        }
+        
+        p.subtitle {
+            font-size: 18px;
+            opacity: 0.8;
+            margin-top: 0;
+        }
+        
+        .app-grid {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+        
+        .app-card {
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            overflow: hidden;
+            width: 300px;
+            box-shadow: 0 0 20px rgba(0, 0, 255, 0.3);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .app-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 0 30px rgba(0, 123, 255, 0.6);
+        }
+        
+        .app-image {
+            height: 180px;
+            background-position: center;
+            background-size: cover;
+        }
+        
+        .app-info {
+            padding: 20px;
+        }
+        
+        .app-title {
+            font-size: 24px;
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #1e88e5;
+        }
+        
+        .app-description {
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        
+        .app-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #1e88e5;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .app-button:hover {
+            background-color: #1565c0;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            font-size: 14px;
+            opacity: 0.6;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="container">
+        <button class="logout-btn" onclick="logout()">退出登录</button>
+        
+        <header>
+            <h1>星空应用系列</h1>
+            <p class="subtitle">探索星空，放松心灵</p>
+        </header>
+        
+        <div class="app-grid">
+            <div class="app-card">
+                <div class="app-image" style="background-image: url('img/memory-game.jpg');"></div>
+                <div class="app-info">
+                    <h2 class="app-title">星空记忆游戏</h2>
+                    <p class="app-description">通过记忆星座位置和形状，探索宇宙的神秘。完成挑战时，了解各星座背后的神话故事。</p>
+                    <a href="memory-game.html" class="app-button">开始游戏</a>
+                </div>
+            </div>
+            
+            <div class="app-card">
+                <div class="app-image" style="background-image: url('img/focus-clock.jpg');"></div>
+                <div class="app-info">
+                    <h2 class="app-title">星空冥想时钟</h2>
+                    <p class="app-description">在星空背景下专注工作，随时间推移星空发生变化。完成任务获得星体奖励，记录专注历史。</p>
+                    <a href="clock.html" class="app-button">开始专注</a>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            &copy; 2023 星空应用系列 | 密码保护与本地存储
+        </footer>
+    </div>
+
+    <script>
+        // 检查认证状态
+        function checkAuth() {
+            if (sessionStorage.getItem('authenticated') !== 'true') {
+                window.location.href = 'index.html';
+            }
+        }
+        
+        // 退出登录
+        function logout() {
+            sessionStorage.removeItem('authenticated');
+            window.location.href = 'index.html';
+        }
+        
+        // 生成星星背景
+        function createStars() {
+            const stars = document.getElementById('stars');
+            const count = 150;
+            
+            for (let i = 0; i < count; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                const size = Math.random() * 3;
+                const delay = Math.random() * 3;
+                
+                star.style.left = `${x}%`;
+                star.style.top = `${y}%`;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.animationDelay = `${delay}s`;
+                
+                stars.appendChild(star);
+            }
+        }
+        
+        // 页面加载时执行
+        window.onload = function() {
+            checkAuth();
+            createStars();
+            
+            // 创建图片占位符（实际应用中应替换为真实图片）
+            createImagePlaceholders();
+        };
+        
+        // 创建图片占位符（模拟图片，实际应用中应替换为真实图片）
+        function createImagePlaceholders() {
+            const memoryGameImg = document.querySelector('.app-card:nth-child(1) .app-image');
+            const focusClockImg = document.querySelector('.app-card:nth-child(2) .app-image');
+            
+            // 使用渐变背景代替实际图片
+            memoryGameImg.style.backgroundImage = 'linear-gradient(45deg, #003366, #006699)';
+            focusClockImg.style.backgroundImage = 'linear-gradient(45deg, #330066, #660099)';
+        }
+    </script>
+</body>
+</html> 

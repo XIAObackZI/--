@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星空记忆游戏</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #000428, #004e92);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite ease-in-out;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+        
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .title {
+            font-size: 28px;
+            margin: 0;
+            text-shadow: 0 0 10px rgba(0, 123, 255, 0.7);
+        }
+        
+        .game-info {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .info-box {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        
+        .game-container {
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 255, 0.3);
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .game-board {
+            width: 100%;
+            aspect-ratio: 16/9;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        
+        .star-point {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .star-point:hover {
+            transform: translate(-50%, -50%) scale(1.5);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+        
+        .star-point.selected {
+            background-color: #2196f3;
+            box-shadow: 0 0 15px #2196f3;
+            transform: translate(-50%, -50%) scale(1.3);
+        }
+        
+        .star-point.correct {
+            background-color: #4caf50;
+            box-shadow: 0 0 15px #4caf50;
+        }
+        
+        .star-point.wrong {
+            background-color: #f44336;
+            box-shadow: 0 0 15px #f44336;
+        }
+        
+        .line {
+            position: absolute;
+            height: 2px;
+            background-color: rgba(33, 150, 243, 0.7);
+            transform-origin: 0 0;
+            z-index: 1;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #1e88e5;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #1565c0;
+        }
+        
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .story-container {
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 255, 0.3);
+        }
+        
+        .story-title {
+            font-size: 24px;
+            margin-top: 0;
+            color: #1e88e5;
+        }
+        
+        .story-content {
+            line-height: 1.6;
+        }
+        
+        .story-image {
+            width: 100%;
+            border-radius: 10px;
+            margin: 15px 0;
+            height: 200px;
+            background-position: center;
+            background-size: cover;
+            background-color: #1a1a2e;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: rgba(10, 20, 50, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0, 123, 255, 0.5);
+        }
+        
+        .modal-title {
+            font-size: 28px;
+            margin-top: 0;
+            color: #1e88e5;
+        }
+        
+        .score-display {
+            font-size: 36px;
+            margin: 20px 0;
+        }
+        
+        .high-score {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #4caf50;
+        }
+        
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            gap: 10px;
+        }
+        
+        .nav-button {
+            padding: 8px 16px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .nav-button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .game-board {
+                aspect-ratio: 1/1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="container">
+        <header>
+            <h1 class="title">星空记忆游戏</h1>
+            
+            <div class="game-info">
+                <div class="info-box">
+                    <strong>关卡：</strong> <span id="level">1</span>
+                </div>
+                <div class="info-box">
+                    <strong>分数：</strong> <span id="score">0</span>
+                </div>
+                <div class="info-box">
+                    <strong>最高分：</strong> <span id="high-score">0</span>
+                </div>
+            </div>
+        </header>
+        
+        <div class="game-container">
+            <div class="nav-buttons">
+                <button class="nav-button" onclick="backToMenu()">返回菜单</button>
+                <button class="nav-button" onclick="toggleInstructions()">游戏说明</button>
+            </div>
+            
+            <div class="game-board" id="game-board">
+                <!-- 星星点位和连线会在JS中动态生成 -->
+            </div>
+            
+            <div class="controls">
+                <button id="show-pattern-btn" onclick="showPattern()">显示星座</button>
+                <button id="check-answer-btn" onclick="checkAnswer()" disabled>检查答案</button>
+                <button id="next-level-btn" onclick="nextLevel()" disabled>下一关</button>
+            </div>
+        </div>
+        
+        <div class="story-container" id="story-container">
+            <h2 class="story-title">星座故事</h2>
+            <div class="story-image" id="story-image"></div>
+            <div class="story-content" id="story-content">
+                开始游戏，连接星座，解锁星座背后的神话故事...
+            </div>
+        </div>
+    </div>
+    
+    <!-- 游戏结束弹窗 -->
+    <div class="modal" id="game-over-modal">
+        <div class="modal-content">
+            <h2 class="modal-title">游戏结束</h2>
+            <p>恭喜你完成了星空记忆挑战！</p>
+            <div class="score-display">
+                得分: <span id="final-score">0</span>
+            </div>
+            <div class="high-score">
+                最高分: <span id="final-high-score">0</span>
+            </div>
+            <button onclick="restartGame()">再玩一次</button>
+            <button onclick="backToMenu()">返回菜单</button>
+        </div>
+    </div>
+    
+    <!-- 游戏说明弹窗 -->
+    <div class="modal" id="instructions-modal">
+        <div class="modal-content">
+            <h2 class="modal-title">游戏说明</h2>
+            <p>
+                1. 点击"显示星座"按钮查看本关星座的连线。<br>
+                2. 记忆星座的形状和连线。<br>
+                3. 星座会在几秒钟后消失。<br>
+                4. 点击星点选择，再次点击取消选择。<br>
+                5. 按正确的顺序连接星点，重现星座形状。<br>
+                6. 点击"检查答案"验证你的连接。<br>
+                7. 答对后，解锁星座背后的神话故事。<br>
+                8. 难度会随关卡提升而增加。
+            </p>
+            <button onclick="toggleInstructions()">开始游戏</button>
+        </div>
+    </div>
+
+    <script>
+        // 检查认证状态
+        function checkAuth() {
+            if (sessionStorage.getItem('authenticated') !== 'true') {
+                window.location.href = 'index.html';
+            }
+        }
+        
+        // 返回菜单
+        function backToMenu() {
+            console.log("返回菜单...");
+            window.location.href = 'menu.html';
+        }
+        
+        // 星座数据库
+        const constellations = [
+            {
+                name: '北斗七星',
+                story: '北斗七星是大熊座的一部分。在中国古代被视为帝王的象征，象征着皇权和命运。古人用它来指示方向，特别是找到北极星。在希腊神话中，它代表着被宙斯放到天上的卡利斯托和她的儿子阿尔卡斯，以躲避天后赫拉的愤怒。',
+                difficulty: 1,
+                points: 7
+            },
+            {
+                name: '猎户座',
+                story: '猎户座是夜空中最容易识别的星座之一。在希腊神话中，它代表着英勇的猎人俄里翁。据传说，俄里翁是海神波塞冬的儿子，拥有非凡的狩猎技巧。他曾扬言要杀死地球上所有野兽，因此激怒了大地女神盖亚，她派出一只巨蝎杀死了他。宙斯将俄里翁和天蝎座分别放在天空的相对位置，使它们永远不会同时出现在夜空中。',
+                difficulty: 2,
+                points: 9
+            },
+            {
+                name: '天鹅座',
+                story: '天鹅座在夜空中呈现出一只展翅飞翔的天鹅形象。在希腊神话中，宙斯曾变身为天鹅接近斯巴达国王的妻子丽达。这段奇特的结合导致了丽达生下了一对双胞胎——波吕克斯和美丽的海伦（特洛伊战争中的海伦）。为纪念这段故事，宙斯将天鹅的形象置于星空中。',
+                difficulty: 2,
+                points: 9
+            },
+            {
+                name: '天蝎座',
+                story: '天蝎座代表着杀死猎人俄里翁的巨蝎。在希腊神话中，这只巨蝎是由大地女神盖亚派出的，目的是惩罚傲慢的猎人俄里翁。在击败俄里翁后，宙斯将巨蝎放到天上作为一个警示，提醒人们不要过于骄傲。天蝎座和猎户座在天空中相对，永远不会同时出现在夜空中。',
+                difficulty: 3,
+                points: 11
+            },
+            {
+                name: '仙女座',
+                story: '仙女座代表着埃塞俄比亚的美丽王后卡西俄佩亚。在希腊神话中，卡西俄佩亚因吹嘘自己的美貌超过海洋女神，激怒了海神波塞冬。作为惩罚，波塞冬派出一只海怪袭击王国，国王被迫将女儿安德洛墨达献祭给海怪。英雄珀尔修斯最终救出了安德洛墨达，卡西俄佩亚则被置于天空中，在北极星周围永远旋转。',
+                difficulty: 3,
+                points: 12
+            },
+            {
+                name: '天龙座',
+                story: '天龙座在北天绕着北极蜿蜒盘旋，像一条长龙。在希腊神话中，它代表着被赫拉克勒斯杀死的拉冬龙，这条百头龙看守着赫斯珀里得斯花园中的金苹果。在赫拉克勒斯的十二项任务中，其中一项就是取得这些金苹果。赫拉后来将龙升入天空，形成了天龙座。',
+                difficulty: 4,
+                points: 14
+            },
+            {
+                name: '英仙座',
+                story: '英仙座代表着希腊神话中的英雄珀尔修斯。他是宙斯与达那厄所生的儿子，以其勇敢和智慧著称。他最著名的壮举是杀死了蛇发女妖美杜莎，并利用她的头颅将威胁安德洛墨达的海怪变成石头，最终与安德洛墨达结为夫妇。为了纪念他的英勇事迹，珀尔修斯与妻子安德洛墨达、岳父刻甫斯和岳母卡西俄佩亚的形象都被置于相邻的星座中。',
+                difficulty: 4,
+                points: 16
+            },
+            {
+                name: '飞马座',
+                story: '飞马座代表着神话中的飞马珀伽索斯。在希腊神话中，当珀尔修斯斩下美杜莎的头颅时，从她的颈部飞出了一匹长翼的白马——珀伽索斯。这匹神奇的飞马后来成为众神的坐骑，尤其与缪斯女神有特别的联系。珀伽索斯在地上一踏足，就会涌出灵感之泉。为纪念这匹神奇的生物，宙斯将它的形象置于星空中。',
+                difficulty: 4,
+                points: 14
+            },
+            {
+                name: '猎犬座',
+                story: '猎犬座是一个小而明亮的星座，位于大熊座的尾部下方。它代表着天上猎人的猎犬。在希腊神话中，这些猎犬被认为是牧羊神潘或女猎手黛安娜的随从。这个星座最著名的特征是其中包含着一个美丽的螺旋星系M51，也被称为"漩涡星系"，是天文学家和爱好者观察的热门目标。',
+                difficulty: 5,
+                points: 9
+            },
+            {
+                name: '半人马座',
+                story: '半人马座是南天最大的星座之一，代表着希腊神话中的半人马智者喀戎。在希腊神话中，喀戎与其他粗暴的半人马不同，他以智慧、医术和音乐技能著称，是许多希腊英雄的导师。传说他教授过赫拉克勒斯、阿喀琉斯和阿斯克勒庇俄斯等人。但讽刺的是，他被自己的学生赫拉克勒斯误伤，永远无法治愈。宙斯怜悯他，将他升入天空成为星座。',
+                difficulty: 5,
+                points: 18
+            }
+        ];
+        
+        let gameState = {
+            level: 1,
+            score: 0,
+            highScore: 0,
+            currentConstellation: null,
+            starPoints: [],
+            correctPattern: [],
+            userPattern: [],
+            selectedPoints: [],
+            gameStarted: false,
+            patternVisible: false
+        };
+        
+        // 页面加载时执行
+        window.onload = function() {
+            checkAuth();
+            createStars();
+            loadHighScore();
+            showInstructions();
+            initLevel();
+            
+            // 确保按钮可点击
+            document.querySelector('.nav-button[onclick="backToMenu()"]').addEventListener('click', function(e) {
+                e.preventDefault();
+                backToMenu();
+            });
+            
+            document.querySelector('.nav-button[onclick="toggleInstructions()"]').addEventListener('click', function(e) {
+                e.preventDefault();
+                toggleInstructions();
+            });
+            
+            // 为下一关按钮添加额外的点击事件
+            document.getElementById('next-level-btn').addEventListener('click', function() {
+                nextLevel();
+            });
+        };
+        
+        // 加载最高分
+        function loadHighScore() {
+            const highScore = localStorage.getItem('constellationGameHighScore');
+            if (highScore) {
+                gameState.highScore = parseInt(highScore);
+                document.getElementById('high-score').textContent = gameState.highScore;
+            }
+        }
+        
+        // 保存最高分
+        function saveHighScore() {
+            if (gameState.score > gameState.highScore) {
+                gameState.highScore = gameState.score;
+                localStorage.setItem('constellationGameHighScore', gameState.highScore);
+                document.getElementById('high-score').textContent = gameState.highScore;
+            }
+        }
+        
+        // 初始化关卡
+        function initLevel() {
+            const levelIndex = Math.min(gameState.level - 1, constellations.length - 1);
+            gameState.currentConstellation = constellations[levelIndex];
+            
+            // 清空游戏板
+            const gameBoard = document.getElementById('game-board');
+            gameBoard.innerHTML = '';
+            
+            // 重置状态
+            gameState.starPoints = [];
+            gameState.correctPattern = [];
+            gameState.userPattern = [];
+            gameState.selectedPoints = [];
+            gameState.patternVisible = false;
+            gameState.gameStarted = false;
+            
+            // 根据难度确定星点数量
+            const pointCount = gameState.currentConstellation.points;
+            
+            // 生成随机星点
+            for (let i = 0; i < pointCount; i++) {
+                const x = 10 + Math.random() * 80; // 生成10%-90%范围内的坐标
+                const y = 10 + Math.random() * 80;
+                
+                gameState.starPoints.push({ x, y, id: i });
+                
+                const starPoint = document.createElement('div');
+                starPoint.classList.add('star-point');
+                starPoint.setAttribute('data-id', i);
+                starPoint.style.left = `${x}%`;
+                starPoint.style.top = `${y}%`;
+                
+                // 添加点击事件
+                starPoint.addEventListener('click', function() {
+                    if (gameState.patternVisible) return; // 显示模式时不能点击
+                    
+                    const id = parseInt(this.getAttribute('data-id'));
+                    togglePointSelection(id);
+                });
+                
+                gameBoard.appendChild(starPoint);
+            }
+            
+            // 生成连接模式（根据难度调整复杂度）
+            generatePattern();
+            
+            // 更新UI
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('score').textContent = gameState.score;
+            
+            // 重置按钮状态
+            document.getElementById('show-pattern-btn').disabled = false;
+            document.getElementById('check-answer-btn').disabled = true;
+            document.getElementById('next-level-btn').disabled = true;
+            
+            // 更新故事
+            document.getElementById('story-content').textContent = "连接正确的星座，解锁神话故事...";
+            document.getElementById('story-image').style.backgroundImage = 'linear-gradient(45deg, #001a33, #003366)';
+        }
+        
+        // 生成星座连接模式
+        function generatePattern() {
+            const difficulty = gameState.currentConstellation.difficulty;
+            const pointCount = gameState.starPoints.length;
+            
+            // 根据难度确定连接数量
+            const connectionCount = Math.min(pointCount - 1, difficulty * 2 + 3);
+            
+            // 随机选择起始点
+            let currentPoint = Math.floor(Math.random() * pointCount);
+            gameState.correctPattern.push(currentPoint);
+            
+            // 生成其余连接
+            for (let i = 0; i < connectionCount - 1; i++) {
+                // 找出还未连接的点
+                const availablePoints = [];
+                for (let j = 0; j < pointCount; j++) {
+                    if (!gameState.correctPattern.includes(j)) {
+                        availablePoints.push(j);
+                    }
+                }
+                
+                // 如果没有可用点，则打破当前连接，连接到已有的点
+                if (availablePoints.length === 0) {
+                    const existingPoints = [];
+                    for (let j = 0; j < gameState.correctPattern.length - 1; j++) {
+                        existingPoints.push(gameState.correctPattern[j]);
+                    }
+                    currentPoint = existingPoints[Math.floor(Math.random() * existingPoints.length)];
+                } else {
+                    // 否则连接到新点
+                    const nextPoint = availablePoints[Math.floor(Math.random() * availablePoints.length)];
+                    currentPoint = nextPoint;
+                }
+                
+                gameState.correctPattern.push(currentPoint);
+            }
+        }
+        
+        // 显示星座模式
+        function showPattern() {
+            if (gameState.patternVisible) return;
+            
+            gameState.patternVisible = true;
+            document.getElementById('show-pattern-btn').disabled = true;
+            
+            const gameBoard = document.getElementById('game-board');
+            
+            // 移除所有现有的线
+            const existingLines = document.querySelectorAll('.line');
+            existingLines.forEach(line => line.remove());
+            
+            // 重置所有点的选择状态
+            document.querySelectorAll('.star-point').forEach(point => {
+                point.classList.remove('selected', 'correct', 'wrong');
+            });
+            
+            // 高亮显示正确模式中的点
+            for (let i = 0; i < gameState.correctPattern.length; i++) {
+                const pointId = gameState.correctPattern[i];
+                const point = document.querySelector(`.star-point[data-id="${pointId}"]`);
+                point.classList.add('correct');
+                
+                // 如果不是第一个点，绘制连接线
+                if (i > 0) {
+                    const prevPointId = gameState.correctPattern[i - 1];
+                    const prevPoint = gameState.starPoints[prevPointId];
+                    const currPoint = gameState.starPoints[pointId];
+                    
+                    drawLine(prevPoint.x, prevPoint.y, currPoint.x, currPoint.y, 'correct');
+                }
+            }
+            
+            // 几秒后隐藏模式
+            setTimeout(() => {
+                // 移除所有线
+                document.querySelectorAll('.line').forEach(line => line.remove());
+                
+                // 移除所有高亮
+                document.querySelectorAll('.star-point').forEach(point => {
+                    point.classList.remove('correct');
+                });
+                
+                gameState.patternVisible = false;
+                gameState.gameStarted = true;
+                document.getElementById('check-answer-btn').disabled = false;
+            }, 3000 + gameState.level * 500); // 随难度增加记忆时间
+        }
+        
+        // 切换点的选择状态
+        function togglePointSelection(pointId) {
+            if (!gameState.gameStarted) return;
+            
+            const point = document.querySelector(`.star-point[data-id="${pointId}"]`);
+            const index = gameState.selectedPoints.indexOf(pointId);
+            
+            if (index === -1) {
+                // 选择点
+                gameState.selectedPoints.push(pointId);
+                point.classList.add('selected');
+                
+                // 如果不是第一个点，绘制连接线
+                if (gameState.selectedPoints.length > 1) {
+                    const prevPointId = gameState.selectedPoints[gameState.selectedPoints.length - 2];
+                    const prevPoint = gameState.starPoints[prevPointId];
+                    const currPoint = gameState.starPoints[pointId];
+                    
+                    drawLine(prevPoint.x, prevPoint.y, currPoint.x, currPoint.y, 'selected');
+                }
+            } else {
+                // 如果是最后一个点，可以取消选择
+                if (index === gameState.selectedPoints.length - 1) {
+                    gameState.selectedPoints.pop();
+                    point.classList.remove('selected');
+                    
+                    // 移除最后一条线
+                    const lines = document.querySelectorAll('.line');
+                    if (lines.length > 0) {
+                        lines[lines.length - 1].remove();
+                    }
+                }
+            }
+        }
+        
+        // 绘制连接线
+        function drawLine(x1, y1, x2, y2, type) {
+            const gameBoard = document.getElementById('game-board');
+            const line = document.createElement('div');
+            line.classList.add('line');
+            
+            if (type === 'correct') {
+                line.style.backgroundColor = 'rgba(76, 175, 80, 0.7)';
+            } else if (type === 'wrong') {
+                line.style.backgroundColor = 'rgba(244, 67, 54, 0.7)';
+            }
+            
+            // 计算两点之间的距离
+            const length = Math.sqrt(Math.pow((x2 - x1) * gameBoard.offsetWidth / 100, 2) + 
+                                     Math.pow((y2 - y1) * gameBoard.offsetHeight / 100, 2));
+            
+            // 计算线的角度
+            const angle = Math.atan2((y2 - y1) * gameBoard.offsetHeight / 100, 
+                                     (x2 - x1) * gameBoard.offsetWidth / 100) * 180 / Math.PI;
+            
+            line.style.width = `${length}px`;
+            line.style.left = `${x1}%`;
+            line.style.top = `${y1}%`;
+            line.style.transform = `rotate(${angle}deg)`;
+            
+            gameBoard.appendChild(line);
+        }
+        
+        // 检查答案
+        function checkAnswer() {
+            if (gameState.selectedPoints.length < 2) {
+                alert('请至少连接两个星点！');
+                return;
+            }
+            
+            // 标记正确和错误
+            let correct = true;
+            
+            if (gameState.selectedPoints.length !== gameState.correctPattern.length) {
+                correct = false;
+            } else {
+                for (let i = 0; i < gameState.correctPattern.length; i++) {
+                    if (gameState.selectedPoints[i] !== gameState.correctPattern[i]) {
+                        correct = false;
+                        break;
+                    }
+                }
+            }
+            
+            // 更新UI
+            document.querySelectorAll('.star-point').forEach(point => {
+                point.classList.remove('selected');
+                const id = parseInt(point.getAttribute('data-id'));
+                
+                if (gameState.correctPattern.includes(id)) {
+                    point.classList.add('correct');
+                }
+                
+                if (gameState.selectedPoints.includes(id) && 
+                    !gameState.correctPattern.includes(id)) {
+                    point.classList.add('wrong');
+                }
+            });
+            
+            // 移除所有现有的线
+            document.querySelectorAll('.line').forEach(line => line.remove());
+            
+            // 重绘正确的线
+            for (let i = 1; i < gameState.correctPattern.length; i++) {
+                const prevPointId = gameState.correctPattern[i - 1];
+                const currPointId = gameState.correctPattern[i];
+                const prevPoint = gameState.starPoints[prevPointId];
+                const currPoint = gameState.starPoints[currPointId];
+                
+                drawLine(prevPoint.x, prevPoint.y, currPoint.x, currPoint.y, 'correct');
+            }
+            
+            // 如果答对，更新分数和故事
+            if (correct) {
+                // 计算得分：基础分 * 关卡
+                const baseScore = 10;
+                const levelBonus = gameState.level;
+                const score = baseScore * levelBonus;
+                
+                gameState.score += score;
+                document.getElementById('score').textContent = gameState.score;
+                
+                // 展示星座故事
+                showConstellationStory();
+                
+                // 如果还有下一关，启用下一关按钮
+                if (gameState.level < constellations.length) {
+                    document.getElementById('next-level-btn').disabled = false;
+                    // 确保用户能够看到启用的按钮
+                    document.getElementById('next-level-btn').style.opacity = '1';
+                    document.getElementById('next-level-btn').style.cursor = 'pointer';
+                    // 添加提示，告知用户可以进入下一关
+                    alert('恭喜你答对了！点击"下一关"按钮继续游戏。');
+                } else {
+                    // 游戏结束
+                    setTimeout(() => {
+                        showGameOver();
+                    }, 2000);
+                }
+            } else {
+                // 答错，可以重试
+                document.getElementById('show-pattern-btn').disabled = false;
+                document.getElementById('check-answer-btn').disabled = true;
+                gameState.gameStarted = false;
+                gameState.selectedPoints = [];
+                alert('星座连接不正确，请重试！');
+            }
+            
+            // 保存最高分
+            saveHighScore();
+        }
+        
+        // 展示星座故事
+        function showConstellationStory() {
+            const constellation = gameState.currentConstellation;
+            const storyElement = document.getElementById('story-content');
+            const imageElement = document.getElementById('story-image');
+            
+            storyElement.textContent = constellation.story;
+            
+            // 使用渐变替代实际图片（实际应用中应替换为真实图片）
+            imageElement.style.backgroundImage = getConstellationGradient(constellation.name);
+        }
+        
+        // 获取星座的渐变背景（实际应用中应替换为真实图片）
+        function getConstellationGradient(name) {
+            const gradients = {
+                '北斗七星': 'linear-gradient(45deg, #000033, #000066, #000099)',
+                '猎户座': 'linear-gradient(45deg, #000066, #003366, #006666)',
+                '天鹅座': 'linear-gradient(45deg, #000033, #001a4d, #003366)',
+                '天蝎座': 'linear-gradient(45deg, #330000, #660000, #990000)',
+                '仙女座': 'linear-gradient(45deg, #330033, #660066, #990099)',
+                '天龙座': 'linear-gradient(45deg, #003300, #006600, #009900)',
+                '英仙座': 'linear-gradient(45deg, #663300, #996600, #cc9900)',
+                '飞马座': 'linear-gradient(45deg, #000066, #0000cc, #0000ff)',
+                '猎犬座': 'linear-gradient(45deg, #003333, #006666, #009999)',
+                '半人马座': 'linear-gradient(45deg, #330033, #660066, #990099)'
+            };
+            
+            return gradients[name] || 'linear-gradient(45deg, #001a33, #003366)';
+        }
+        
+        // 下一关
+        function nextLevel() {
+            console.log("进入下一关...");
+            if (gameState.level < constellations.length) {
+                gameState.level++;
+                initLevel();
+                // 提示用户新关卡已开始
+                alert(`第${gameState.level}关：${gameState.currentConstellation.name}。点击"显示星座"开始挑战！`);
+            } else {
+                alert("已经是最后一关了！");
+            }
+        }
+        
+        // 显示游戏结束弹窗
+        function showGameOver() {
+            document.getElementById('final-score').textContent = gameState.score;
+            document.getElementById('final-high-score').textContent = gameState.highScore;
+            document.getElementById('game-over-modal').style.display = 'flex';
+        }
+        
+        // 重新开始游戏
+        function restartGame() {
+            gameState.level = 1;
+            gameState.score = 0;
+            document.getElementById('game-over-modal').style.display = 'none';
+            initLevel();
+        }
+        
+        // 显示游戏说明
+        function showInstructions() {
+            document.getElementById('instructions-modal').style.display = 'flex';
+        }
+        
+        // 切换游戏说明显示/隐藏
+        function toggleInstructions() {
+            const modal = document.getElementById('instructions-modal');
+            if (modal.style.display === 'flex') {
+                modal.style.display = 'none';
+            } else {
+                modal.style.display = 'flex';
+            }
+        }
+        
+        // 生成星星背景
+        function createStars() {
+            const stars = document.getElementById('stars');
+            const count = 150;
+            
+            for (let i = 0; i < count; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                const size = Math.random() * 3;
+                const delay = Math.random() * 3;
+                
+                star.style.left = `${x}%`;
+                star.style.top = `${y}%`;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.animationDelay = `${delay}s`;
+                
+                stars.appendChild(star);
+            }
+        }
+    </script>
+</body>
+</html> 

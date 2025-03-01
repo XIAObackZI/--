@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星空应用系列</title>
+    <!-- 使用本地MD5库 -->
+    <script src="js/md5.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #000428, #004e92);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            overflow: hidden;
+        }
+        
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite ease-in-out;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+        
+        .login-container {
+            position: relative;
+            z-index: 1;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 255, 0.3);
+            width: 300px;
+            text-align: center;
+        }
+        
+        h1 {
+            margin-top: 0;
+            color: #fff;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #1e88e5;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #1565c0;
+        }
+        
+        .message {
+            margin-top: 15px;
+            color: #ff4081;
+            font-size: 14px;
+            height: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="login-container">
+        <h1>星空应用系列</h1>
+        <input type="password" id="password" placeholder="请输入访问密码" autocomplete="off">
+        <button onclick="checkPassword()">进入星空</button>
+        <div class="message" id="message"></div>
+    </div>
+
+    <script>
+        // 生成星星背景
+        function createStars() {
+            const stars = document.getElementById('stars');
+            const count = 100;
+            
+            for (let i = 0; i < count; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                // 随机位置
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                
+                // 随机大小
+                const size = Math.random() * 3;
+                
+                // 随机动画延迟
+                const delay = Math.random() * 3;
+                
+                star.style.left = `${x}%`;
+                star.style.top = `${y}%`;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.animationDelay = `${delay}s`;
+                
+                stars.appendChild(star);
+            }
+        }
+        
+        // 密码验证
+        function checkPassword() {
+            try {
+                const input = document.getElementById('password').value;
+                const messageElement = document.getElementById('message');
+                
+                // 确保输入不为空
+                if (!input) {
+                    messageElement.textContent = '请输入访问密码';
+                    return;
+                }
+                
+                // 使用简单的混淆来保护密码
+                const verify = (p) => {
+                    const k = [115, 116, 97, 114, 115, 107, 121]; // 混淆密码
+                    return p.split('').map(c => c.charCodeAt(0)).join(',') === k.join(',');
+                };
+                
+                const isValid = verify(input.trim());
+                
+                if (isValid) {
+                    sessionStorage.setItem('authenticated', 'true');
+                    window.location.href = 'menu.html';
+                } else {
+                    messageElement.textContent = '访问密码不正确，请重试';
+                    
+                    // 3秒后清除错误信息
+                    setTimeout(() => {
+                        messageElement.textContent = '';
+                    }, 3000);
+                }
+            } catch (error) {
+                console.error('系统错误');
+                messageElement.textContent = '系统错误，请刷新页面重试';
+            }
+        }
+        
+        // 让回车键也能触发密码验证
+        document.getElementById('password').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                checkPassword();
+            }
+        });
+        
+        // 页面加载时创建星星
+        window.onload = function() {
+            createStars();
+            
+            // 如果已认证，直接跳转
+            if (sessionStorage.getItem('authenticated') === 'true') {
+                window.location.href = 'menu.html';
+            }
+        };
+    </script>
+</body>
+</html> 

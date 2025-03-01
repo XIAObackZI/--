@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>星空冥想时钟</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: #0d1b2a;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            overflow: hidden;
+        }
+
+        .nebula-timer {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, 
+                #0d1b2a 0%,
+                #1b2735 40%,
+                #2d3947 100%);
+            animation: quantum-fluctuation 2s infinite;
+        }
+
+        @keyframes quantum-fluctuation {
+            0% { filter: blur(0px); }
+            50% { filter: blur(0.5px) hue-rotate(5deg); }
+            100% { filter: blur(0px); }
+        }
+
+        .quantum-interface {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .pulsar-orbit {
+            width: 150px;
+            height: 150px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            position: relative;
+            margin: 0 auto 20px;
+        }
+
+        #neutron-star-orbit {
+            stroke-dasharray: 471;
+            stroke-dashoffset: 471;
+            transition: stroke-dashoffset 0.1s linear;
+        }
+
+        .timer-display {
+            font-size: 48px;
+            margin: 20px 0;
+            font-family: monospace;
+            color: #4fc3f7;
+        }
+
+        .phase-display {
+            font-size: 24px;
+            margin: 10px 0;
+            color: #81d4fa;
+        }
+
+        .control-panel {
+            margin-top: 20px;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            margin: 0 5px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        button[data-state="running"] {
+            background: #f44336;
+        }
+
+        .settings-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+        }
+
+        #stars-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* 添加设置面板样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: rgba(13, 27, 42, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            width: 80%;
+            max-width: 500px;
+            color: white;
+            box-shadow: 0 0 30px rgba(0, 123, 255, 0.5);
+        }
+
+        .settings-group {
+            margin-bottom: 20px;
+        }
+        
+        .settings-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #4fc3f7;
+        }
+
+        .settings-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .option-btn {
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .option-btn.active {
+            background: #1e88e5;
+            border-color: #1e88e5;
+        }
+
+        .volume-control {
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .achievement {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        .achievement-icon {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .achievement-info {
+            flex-grow: 1;
+        }
+
+        .achievement-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .achievement-progress {
+            font-size: 14px;
+            color: #81d4fa;
+        }
+
+        .achievement.completed {
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: rgba(13, 27, 42, 0.9);
+            border-radius: 10px;
+            color: white;
+            transform: translateX(120%);
+            transition: transform 0.3s;
+            z-index: 1000;
+            box-shadow: 0 0 20px rgba(0, 123, 255, 0.3);
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        /* 提醒事项样式 */
+        #reminders-modal .modal-content {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .reminder-item {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .reminder-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .reminder-checkbox {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            margin-right: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .reminder-checkbox.checked {
+            background: #4CAF50;
+            border-color: #4CAF50;
+        }
+
+        .reminder-checkbox.checked::after {
+            content: '✓';
+            color: white;
+            font-size: 14px;
+        }
+
+        .reminder-content {
+            flex-grow: 1;
+        }
+
+        .reminder-title {
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .reminder-title.completed {
+            text-decoration: line-through;
+            opacity: 0.7;
+        }
+
+        .reminder-date {
+            font-size: 12px;
+            color: #81d4fa;
+        }
+
+        .reminder-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .reminder-action-btn {
+            background: none;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            padding: 5px;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+
+        .reminder-action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .add-reminder-btn {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px dashed rgba(255, 255, 255, 0.3);
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        .add-reminder-icon {
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+
+        .reminder-form {
+            display: none;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #81d4fa;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .form-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .category-badge.work {
+            background: #2196F3;
+        }
+
+        .category-badge.personal {
+            background: #9C27B0;
+        }
+
+        .category-badge.health {
+            background: #4CAF50;
+        }
+
+        .category-badge.study {
+            background: #FF9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="nebula-timer">
+        <canvas id="stars-container"></canvas>
+        
+        <div class="quantum-interface">
+            <svg class="pulsar-orbit" viewBox="0 0 150 150">
+                <circle id="neutron-star-orbit" 
+                        cx="75" cy="75" r="73" 
+                        fill="none" 
+                        stroke="#4fc3f7" 
+                        stroke-width="4"/>
+            </svg>
+            
+            <div class="timer-display" id="timer">25:00</div>
+            <div class="phase-display" id="phase">超维度聚焦</div>
+            
+            <div class="control-panel">
+                <button id="start-btn">开始专注</button>
+                <button id="pause-btn" disabled>暂停</button>
+                <button id="stop-btn" disabled>结束</button>
+            </div>
+            </div>
+            
+        <div class="settings-panel">
+            <button id="settings-btn">设置</button>
+            <button id="achievements-btn">成就</button>
+            <button id="reminders-btn">提醒</button>
+            <button onclick="window.location.href='menu.html'">返回菜单</button>
+        </div>
+            </div>
+            
+    <!-- 设置面板 -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <h2 class="settings-title">设置</h2>
+            
+            <div class="settings-group">
+                <h3>背景主题</h3>
+                <div class="settings-options">
+                    <button class="option-btn active" data-theme="default">默认星空</button>
+                    <button class="option-btn" data-theme="aurora">极光</button>
+                    <button class="option-btn" data-theme="galaxy">银河</button>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>音效</h3>
+                <div class="settings-options">
+                    <button class="option-btn active" data-sound="nasa">NASA音效</button>
+                    <button class="option-btn" data-sound="nature">自然音效</button>
+                    <button class="option-btn" data-sound="minimal">简约音效</button>
+                </div>
+                <div class="volume-control">
+                    <label>音量: <span id="volume-value">80%</span></label>
+                    <input type="range" id="volume-slider" min="0" max="100" value="80">
+                    <button onclick="testSound()">测试音效</button>
+            </div>
+        </div>
+        
+            <div class="settings-group">
+                <h3>专注时间</h3>
+                <div class="settings-options">
+                    <button class="option-btn active" data-duration="25">25分钟</button>
+                    <button class="option-btn" data-duration="45">45分钟</button>
+                    <button class="option-btn" data-duration="60">60分钟</button>
+        </div>
+    </div>
+    
+            <button onclick="closeSettings()">保存设置</button>
+        </div>
+    </div>
+
+    <!-- 成就面板 -->
+    <div class="modal" id="achievements-modal">
+        <div class="modal-content">
+            <h2 class="settings-title">成就</h2>
+            
+            <div class="achievements-list">
+                <div class="achievement" id="first-focus">
+                    <div class="achievement-icon">🌟</div>
+                    <div class="achievement-info">
+                        <div class="achievement-title">初次专注</div>
+                        <div class="achievement-progress">完成第一次专注</div>
+        </div>
+    </div>
+    
+                <div class="achievement" id="focus-master">
+                    <div class="achievement-icon">👑</div>
+                    <div class="achievement-info">
+                        <div class="achievement-title">专注大师</div>
+                        <div class="achievement-progress">累计专注时间: <span>0</span>/10小时</div>
+                    </div>
+                </div>
+                
+                <div class="achievement" id="persistent">
+                    <div class="achievement-icon">🔥</div>
+                    <div class="achievement-info">
+                        <div class="achievement-title">持之以恒</div>
+                        <div class="achievement-progress">连续专注: <span>0</span>/7天</div>
+                    </div>
+                </div>
+                
+                <div class="achievement" id="early-bird">
+                    <div class="achievement-icon">🌅</div>
+                    <div class="achievement-info">
+                        <div class="achievement-title">早起达人</div>
+                        <div class="achievement-progress">清晨专注: <span>0</span>/5次</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button onclick="closeAchievements()">关闭</button>
+        </div>
+    </div>
+
+    <!-- 通知提示 -->
+    <div class="notification" id="notification"></div>
+
+    <!-- 提醒事项面板 -->
+    <div class="modal" id="reminders-modal">
+        <div class="modal-content">
+            <h2 class="settings-title">我的提醒</h2>
+            
+            <div id="reminders-list">
+                <!-- 提醒事项将在此动态生成 -->
+            </div>
+            
+            <button class="add-reminder-btn" id="show-add-form">
+                <div class="add-reminder-icon">+</div>
+                <span>添加新提醒</span>
+            </button>
+            
+            <div class="reminder-form" id="reminder-form">
+                <div class="form-group">
+                    <label for="reminder-title">标题</label>
+                    <input type="text" id="reminder-title" placeholder="输入提醒标题">
+        </div>
+                
+                <div class="form-group">
+                    <label for="reminder-date">日期与时间</label>
+                    <input type="datetime-local" id="reminder-date">
+    </div>
+
+                <div class="form-group">
+                    <label for="reminder-category">分类</label>
+                    <select id="reminder-category">
+                        <option value="work">工作</option>
+                        <option value="personal">个人</option>
+                        <option value="health">健康</option>
+                        <option value="study">学习</option>
+                    </select>
+                </div>
+                
+                <input type="hidden" id="reminder-id" value="">
+                <input type="hidden" id="edit-mode" value="add">
+                
+                <div class="form-buttons">
+                    <button onclick="cancelAddReminder()">取消</button>
+                    <button onclick="saveReminder()">保存</button>
+                </div>
+            </div>
+            
+            <button onclick="closeReminders()">关闭</button>
+        </div>
+    </div>
+
+    <script>
+        // 音效管理器
+        class SoundManager {
+            constructor() {
+                this.sounds = {
+                    nasa: new Audio('assets/sounds/nasa.mp3'),
+                    nature: new Audio('assets/sounds/nature.mp3'),
+                    minimal: new Audio('assets/sounds/minimal.mp3'),
+                    complete: new Audio('assets/sounds/complete.mp3')
+                };
+                
+                this.currentSound = 'nasa';
+                this.volume = 0.8;
+                
+                // 初始化音量
+                Object.values(this.sounds).forEach(sound => {
+                    sound.volume = this.volume;
+                });
+            }
+            
+            setVolume(value) {
+                this.volume = value;
+                Object.values(this.sounds).forEach(sound => {
+                    sound.volume = value;
+                });
+            }
+            
+            play(soundName) {
+                const sound = this.sounds[soundName];
+                if (sound) {
+                    sound.currentTime = 0;
+                    sound.play().catch(e => console.log('播放音效失败:', e));
+                }
+            }
+            
+            stop(soundName) {
+                const sound = this.sounds[soundName];
+                if (sound) {
+                    sound.pause();
+                    sound.currentTime = 0;
+                }
+            }
+            
+            testCurrentSound() {
+                this.play(this.currentSound);
+            }
+        }
+
+        // 成就管理器
+        class AchievementManager {
+            constructor() {
+                this.achievements = {
+                    firstFocus: { completed: false },
+                    focusMaster: { progress: 0, target: 36000000 }, // 10小时换算为毫秒
+                    persistent: { progress: 0, target: 7 },
+                    earlyBird: { progress: 0, target: 5 }
+                };
+                
+                this.loadAchievements();
+            }
+            
+            loadAchievements() {
+                const saved = localStorage.getItem('achievements');
+                if (saved) {
+                    this.achievements = JSON.parse(saved);
+                }
+                this.updateUI();
+            }
+            
+            saveAchievements() {
+                localStorage.setItem('achievements', JSON.stringify(this.achievements));
+            }
+            
+            updateProgress(type, value) {
+                switch (type) {
+                    case 'firstFocus':
+                        if (!this.achievements.firstFocus.completed) {
+                            this.achievements.firstFocus.completed = true;
+                            this.showNotification('成就解锁: 初次专注');
+                        }
+                        break;
+                    case 'focusMaster':
+                        this.achievements.focusMaster.progress += value;
+                        if (this.achievements.focusMaster.progress >= this.achievements.focusMaster.target) {
+                            this.showNotification('成就解锁: 专注大师');
+                        }
+                        break;
+                    case 'persistent':
+                        this.achievements.persistent.progress += 1;
+                        if (this.achievements.persistent.progress >= this.achievements.persistent.target) {
+                            this.showNotification('成就解锁: 持之以恒');
+                        }
+                        break;
+                    case 'earlyBird':
+                        if (new Date().getHours() < 9) { // 早于9点算作早起
+                            this.achievements.earlyBird.progress += 1;
+                            if (this.achievements.earlyBird.progress >= this.achievements.earlyBird.target) {
+                                this.showNotification('成就解锁: 早起达人');
+                            }
+                        }
+                        break;
+                }
+                
+                this.saveAchievements();
+                this.updateUI();
+            }
+            
+            updateUI() {
+                // 更新成就显示
+                const elements = {
+                    firstFocus: document.getElementById('first-focus'),
+                    focusMaster: document.getElementById('focus-master'),
+                    persistent: document.getElementById('persistent'),
+                    earlyBird: document.getElementById('early-bird')
+                };
+                
+                if (this.achievements.firstFocus.completed) {
+                    elements.firstFocus.classList.add('completed');
+                }
+                
+                elements.focusMaster.querySelector('.achievement-progress span').textContent = 
+                    Math.floor(this.achievements.focusMaster.progress / 3600000); // 转换为小时
+                
+                elements.persistent.querySelector('.achievement-progress span').textContent = 
+                    this.achievements.persistent.progress;
+                
+                elements.earlyBird.querySelector('.achievement-progress span').textContent = 
+                    this.achievements.earlyBird.progress;
+            }
+            
+            showNotification(message) {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+        }
+
+        // 设置管理器
+        class SettingsManager {
+            constructor() {
+                this.settings = {
+                    theme: 'default',
+                    sound: 'nasa',
+                    volume: 0.8,
+                    duration: 25
+                };
+                
+                this.loadSettings();
+                this.setupEventListeners();
+            }
+            
+            loadSettings() {
+                const saved = localStorage.getItem('timerSettings');
+                if (saved) {
+                    this.settings = JSON.parse(saved);
+                }
+                this.applySettings();
+            }
+            
+            saveSettings() {
+                localStorage.setItem('timerSettings', JSON.stringify(this.settings));
+            }
+            
+            setupEventListeners() {
+                // 主题选择
+                document.querySelectorAll('[data-theme]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.setTheme(btn.dataset.theme);
+                    });
+                });
+                
+                // 音效选择
+                document.querySelectorAll('[data-sound]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.setSound(btn.dataset.sound);
+                    });
+                });
+                
+                // 音量控制
+                const volumeSlider = document.getElementById('volume-slider');
+                volumeSlider.addEventListener('input', () => {
+                    this.setVolume(volumeSlider.value / 100);
+                });
+                
+                // 时长选择
+                document.querySelectorAll('[data-duration]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.setDuration(parseInt(btn.dataset.duration));
+                    });
+                });
+            }
+            
+            setTheme(theme) {
+                this.settings.theme = theme;
+                this.applySettings();
+                this.saveSettings();
+            }
+            
+            setSound(sound) {
+                this.settings.sound = sound;
+                soundManager.currentSound = sound;
+                this.applySettings();
+                this.saveSettings();
+            }
+            
+            setVolume(volume) {
+                this.settings.volume = volume;
+                document.getElementById('volume-value').textContent = `${Math.round(volume * 100)}%`;
+                soundManager.setVolume(volume);
+                this.saveSettings();
+            }
+            
+            setDuration(duration) {
+                this.settings.duration = duration;
+                this.applySettings();
+                this.saveSettings();
+            }
+            
+            applySettings() {
+                // 应用主题
+                document.body.className = `theme-${this.settings.theme}`;
+                
+                // 更新按钮状态
+                document.querySelectorAll('[data-theme]').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.theme === this.settings.theme);
+                });
+                
+                document.querySelectorAll('[data-sound]').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.sound === this.settings.sound);
+                });
+                
+                document.querySelectorAll('[data-duration]').forEach(btn => {
+                    btn.classList.toggle('active', parseInt(btn.dataset.duration) === this.settings.duration);
+                });
+                
+                // 更新音量滑块
+                document.getElementById('volume-slider').value = this.settings.volume * 100;
+                document.getElementById('volume-value').textContent = `${Math.round(this.settings.volume * 100)}%`;
+            }
+        }
+
+        // 全局实例
+        const soundManager = new SoundManager();
+        const achievementManager = new AchievementManager();
+        const settingsManager = new SettingsManager();
+        
+        // 提醒事项管理器
+        class ReminderManager {
+            constructor() {
+                this.reminders = [];
+                this.loadReminders();
+                this.setupNotifications();
+            }
+            
+            loadReminders() {
+                const saved = localStorage.getItem('reminders');
+                if (saved) {
+                    this.reminders = JSON.parse(saved);
+                }
+                this.renderReminders();
+                this.checkDueReminders();
+            }
+            
+            saveReminders() {
+                localStorage.setItem('reminders', JSON.stringify(this.reminders));
+            }
+            
+            addReminder(title, dueDate, category) {
+                const reminder = {
+                    id: Date.now(),
+                    title,
+                    dueDate,
+                    category,
+                    completed: false,
+                    createdAt: new Date().toISOString()
+                };
+                
+                this.reminders.push(reminder);
+                this.saveReminders();
+                this.renderReminders();
+                this.scheduleNotification(reminder);
+                
+                return reminder;
+            }
+            
+            updateReminder(id, title, dueDate, category) {
+                const reminder = this.reminders.find(r => r.id === id);
+                if (reminder) {
+                    reminder.title = title;
+                    reminder.dueDate = dueDate;
+                    reminder.category = category;
+                    
+                    this.saveReminders();
+                    this.renderReminders();
+                    this.scheduleNotification(reminder);
+                }
+            }
+            
+            toggleComplete(id) {
+                const reminder = this.reminders.find(r => r.id === id);
+                if (reminder) {
+                    reminder.completed = !reminder.completed;
+                    this.saveReminders();
+                    this.renderReminders();
+                }
+            }
+            
+            deleteReminder(id) {
+                this.reminders = this.reminders.filter(r => r.id !== id);
+                this.saveReminders();
+                this.renderReminders();
+            }
+            
+            getReminder(id) {
+                return this.reminders.find(r => r.id === parseInt(id));
+            }
+            
+            renderReminders() {
+                const container = document.getElementById('reminders-list');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                // 按日期排序
+                const sortedReminders = [...this.reminders].sort((a, b) => {
+                    // 已完成的放最后
+                    if (a.completed && !b.completed) return 1;
+                    if (!a.completed && b.completed) return -1;
+                    
+                    // 未完成按日期排序
+                    return new Date(a.dueDate) - new Date(b.dueDate);
+                });
+                
+                if (sortedReminders.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; opacity: 0.7;">没有提醒事项</p>';
+                    return;
+                }
+                
+                sortedReminders.forEach(reminder => {
+                    const dueDate = new Date(reminder.dueDate);
+                    const formattedDate = dueDate.toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    const isPastDue = !reminder.completed && new Date() > dueDate;
+                    
+                    const reminderEl = document.createElement('div');
+                    reminderEl.className = 'reminder-item';
+                    reminderEl.innerHTML = `
+                        <div class="reminder-checkbox ${reminder.completed ? 'checked' : ''}" 
+                             onclick="reminderManager.toggleComplete(${reminder.id})"></div>
+                        <div class="reminder-content">
+                            <div class="reminder-title ${reminder.completed ? 'completed' : ''}">${reminder.title}</div>
+                            <div class="reminder-date" style="${isPastDue ? 'color: #ff5252;' : ''}">
+                                ${isPastDue ? '已过期 - ' : ''}${formattedDate}
+                                <span class="category-badge ${reminder.category}">${this.getCategoryName(reminder.category)}</span>
+                            </div>
+                        </div>
+                        <div class="reminder-actions">
+                            <button class="reminder-action-btn" onclick="editReminder(${reminder.id})" title="编辑">
+                                <span style="font-size: 16px;">✎</span>
+                            </button>
+                            <button class="reminder-action-btn" onclick="reminderManager.deleteReminder(${reminder.id})" title="删除">
+                                <span style="font-size: 16px;">×</span>
+                            </button>
+                        </div>
+                    `;
+                    
+                    container.appendChild(reminderEl);
+                });
+            }
+            
+            getCategoryName(category) {
+                const categories = {
+                    work: '工作',
+                    personal: '个人',
+                    health: '健康',
+                    study: '学习'
+                };
+                return categories[category] || category;
+            }
+            
+            setupNotifications() {
+                // 每分钟检查一次是否有到期的提醒
+                setInterval(() => this.checkDueReminders(), 60000);
+            }
+            
+            checkDueReminders() {
+                const now = new Date();
+                this.reminders.forEach(reminder => {
+                    if (!reminder.completed) {
+                        const dueDate = new Date(reminder.dueDate);
+                        
+                        // 到期时间与当前时间的差距在一分钟以内
+                        if (Math.abs(dueDate - now) < 60000 && dueDate > now) {
+                            this.notifyReminder(reminder);
+                        }
+                    }
+                });
+            }
+            
+            scheduleNotification(reminder) {
+                // 计算距离提醒时间还有多久（毫秒）
+                const dueDate = new Date(reminder.dueDate);
+                const now = new Date();
+                const timeUntilDue = dueDate - now;
+                
+                // 如果提醒时间还没到，则设置计时器
+                if (timeUntilDue > 0) {
+                    setTimeout(() => {
+                        // 检查提醒是否仍然存在且未完成
+                        const currentReminder = this.reminders.find(r => r.id === reminder.id);
+                        if (currentReminder && !currentReminder.completed) {
+                            this.notifyReminder(currentReminder);
+                        }
+                    }, timeUntilDue);
+                }
+            }
+            
+            notifyReminder(reminder) {
+                soundManager.play('complete');
+                
+                // 显示浏览器通知
+                if ("Notification" in window) {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            new Notification(reminder.title, {
+                                body: `分类: ${this.getCategoryName(reminder.category)}`,
+                                icon: '/assets/images/notification-icon.png'
+                            });
+                        }
+                    });
+                }
+                
+                // 显示应用内通知
+                const notification = document.getElementById('notification');
+                notification.textContent = `提醒: ${reminder.title}`;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 5000);
+            }
+        }
+        
+        const reminderManager = new ReminderManager();
+        
+        // UI控制函数
+        function showSettings() {
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+
+        function showAchievements() {
+            document.getElementById('achievements-modal').style.display = 'flex';
+        }
+
+        function closeAchievements() {
+            document.getElementById('achievements-modal').style.display = 'none';
+        }
+        
+        function showReminders() {
+            document.getElementById('reminders-modal').style.display = 'flex';
+            reminderManager.renderReminders();
+        }
+        
+        function closeReminders() {
+            document.getElementById('reminders-modal').style.display = 'none';
+        }
+        
+        function showAddReminderForm() {
+            document.getElementById('reminder-form').style.display = 'block';
+            document.getElementById('show-add-form').style.display = 'none';
+            
+            // 重置表单
+            document.getElementById('reminder-title').value = '';
+            document.getElementById('reminder-id').value = '';
+            document.getElementById('edit-mode').value = 'add';
+            
+            // 设置默认日期为当前时间后1小时
+            const now = new Date();
+            now.setHours(now.getHours() + 1);
+            now.setMinutes(0);
+            
+            const dateString = now.toISOString().slice(0, 16);
+            document.getElementById('reminder-date').value = dateString;
+        }
+        
+        function cancelAddReminder() {
+            document.getElementById('reminder-form').style.display = 'none';
+            document.getElementById('show-add-form').style.display = 'flex';
+        }
+        
+        function saveReminder() {
+            const title = document.getElementById('reminder-title').value.trim();
+            const dueDate = document.getElementById('reminder-date').value;
+            const category = document.getElementById('reminder-category').value;
+            const editMode = document.getElementById('edit-mode').value;
+            const reminderId = document.getElementById('reminder-id').value;
+            
+            if (!title) {
+                alert('请输入提醒标题');
+                return;
+            }
+            
+            if (!dueDate) {
+                alert('请选择提醒时间');
+                return;
+            }
+            
+            if (editMode === 'edit' && reminderId) {
+                reminderManager.updateReminder(parseInt(reminderId), title, dueDate, category);
+            } else {
+                reminderManager.addReminder(title, dueDate, category);
+            }
+            
+            // 重置表单
+            document.getElementById('reminder-title').value = '';
+            document.getElementById('reminder-form').style.display = 'none';
+            document.getElementById('show-add-form').style.display = 'flex';
+        }
+        
+        function editReminder(id) {
+            const reminder = reminderManager.getReminder(id);
+            if (!reminder) return;
+            
+            // 显示表单
+            document.getElementById('reminder-form').style.display = 'block';
+            document.getElementById('show-add-form').style.display = 'none';
+            
+            // 填充表单数据
+            document.getElementById('reminder-title').value = reminder.title;
+            document.getElementById('reminder-date').value = reminder.dueDate.slice(0, 16);
+            document.getElementById('reminder-category').value = reminder.category;
+            document.getElementById('reminder-id').value = reminder.id;
+            document.getElementById('edit-mode').value = 'edit';
+        }
+
+        function testSound() {
+            soundManager.testCurrentSound();
+        }
+
+        // 事件监听
+        document.getElementById('settings-btn').addEventListener('click', showSettings);
+        document.getElementById('achievements-btn').addEventListener('click', showAchievements);
+        document.getElementById('reminders-btn').addEventListener('click', showReminders);
+        document.getElementById('show-add-form').addEventListener('click', showAddReminderForm);
+
+        // 星空动画
+        class StarryBackground {
+            constructor() {
+                this.canvas = document.getElementById('stars-container');
+                this.ctx = this.canvas.getContext('2d');
+                this.stars = [];
+                this.resize();
+                this.init();
+                this.animate();
+                
+                window.addEventListener('resize', () => this.resize());
+            }
+            
+            resize() {
+                this.canvas.width = window.innerWidth;
+                this.canvas.height = window.innerHeight;
+            }
+            
+            init() {
+                const starCount = Math.floor((this.canvas.width * this.canvas.height) / 3000);
+                
+                for (let i = 0; i < starCount; i++) {
+                    this.stars.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        size: Math.random() * 2,
+                        brightness: Math.random(),
+                        speed: Math.random() * 0.05
+                    });
+                }
+            }
+            
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.stars.forEach(star => {
+                    star.brightness = Math.abs(Math.sin(Date.now() * star.speed));
+                    
+                    this.ctx.beginPath();
+                    this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                    this.ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness})`;
+                    this.ctx.fill();
+                });
+                
+                requestAnimationFrame(() => this.animate());
+            }
+        }
+
+        // 专注时钟
+        class StellarTimer {
+            constructor() {
+                this.worker = new Worker('timer.worker.js');
+                this.timerDisplay = document.getElementById('timer');
+                this.phaseDisplay = document.getElementById('phase');
+                this.startBtn = document.getElementById('start-btn');
+                this.pauseBtn = document.getElementById('pause-btn');
+                this.stopBtn = document.getElementById('stop-btn');
+                
+                this.setupEventListeners();
+                this.setupWorkerMessageHandler();
+            }
+            
+            setupEventListeners() {
+                this.startBtn.addEventListener('click', () => this.start());
+                this.pauseBtn.addEventListener('click', () => this.pause());
+                this.stopBtn.addEventListener('click', () => this.stop());
+            }
+            
+            setupWorkerMessageHandler() {
+                this.worker.onmessage = (e) => {
+                    const { type, payload } = e.data;
+                    
+                    switch (type) {
+                        case 'TICK':
+                            this.updateDisplay(payload);
+                            break;
+                        case 'COMPLETE':
+                            this.handlePhaseComplete(payload);
+                            break;
+                    }
+                };
+            }
+            
+            start() {
+                const duration = settingsManager.settings.duration * 60 * 1000; // 使用设置中的时长
+                this.worker.postMessage({
+                    type: 'START',
+                    payload: { duration, phaseType: 'focus' }
+                });
+                
+                this.startBtn.disabled = true;
+                this.pauseBtn.disabled = false;
+                this.stopBtn.disabled = false;
+                this.startBtn.setAttribute('data-state', 'running');
+            }
+            
+            pause() {
+                this.worker.postMessage({ type: 'PAUSE' });
+                this.pauseBtn.textContent = '继续';
+                this.pauseBtn.onclick = () => this.resume();
+            }
+            
+            resume() {
+                this.worker.postMessage({ type: 'RESUME' });
+                this.pauseBtn.textContent = '暂停';
+                this.pauseBtn.onclick = () => this.pause();
+            }
+            
+            stop() {
+                this.worker.postMessage({ type: 'STOP' });
+                this.reset();
+            }
+            
+            reset() {
+                this.startBtn.disabled = false;
+                this.pauseBtn.disabled = true;
+                this.stopBtn.disabled = true;
+                this.startBtn.removeAttribute('data-state');
+                this.timerDisplay.textContent = `${settingsManager.settings.duration}:00`;
+                this.phaseDisplay.textContent = '超维度聚焦';
+            }
+            
+            updateDisplay({ remainingTime, progress }) {
+                const minutes = Math.floor(remainingTime / 60000);
+                const seconds = Math.floor((remainingTime % 60000) / 1000);
+                this.timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                const orbit = document.getElementById('neutron-star-orbit');
+                orbit.style.strokeDashoffset = 471 * (1 - progress);
+            }
+            
+            handlePhaseComplete({ phaseType }) {
+                if (phaseType === 'focus') {
+                    soundManager.play('complete');
+                    achievementManager.updateProgress('firstFocus');
+                    achievementManager.updateProgress('focusMaster', settingsManager.settings.duration * 60 * 1000);
+                    achievementManager.updateProgress('persistent');
+                    achievementManager.updateProgress('earlyBird');
+                    
+                    this.showNotification('专注阶段完成', '是否开始休息？');
+                } else {
+                    this.showNotification('休息结束', '准备开始新的专注？');
+                }
+                this.reset();
+            }
+            
+            showNotification(title, body) {
+                if (!("Notification" in window)) return;
+                
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        new Notification(title, {
+                            body: body,
+                            icon: '/assets/images/notification-icon.png'
+                        });
+                    }
+                });
+            }
+        }
+        
+        // 初始化
+        window.onload = function() {
+            new StarryBackground();
+            new StellarTimer();
+        };
+    </script>
+</body>
+</html>
